@@ -1,0 +1,4 @@
+{
+  "version": "0.1.0",
+  "note": "sklearn Pipeline bundles; load with joblib; requires handtap.models on the import path"
+}

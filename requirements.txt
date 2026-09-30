@@ -1,0 +1,21 @@
+# Python 3.10. Versions are the ones the published results were produced with.
+# scikit-learn must match exactly to unpickle models/classifier/*.joblib.
+numpy==2.2.6
+scipy==1.15.3
+pandas==2.3.3
+scikit-learn==1.7.2
+xgboost==3.2.0
+joblib==1.6.0
+opencv-python-headless==5.0.0.93
+mediapipe==1.0.1
+onnxruntime==1.23.2
+matplotlib==3.10.9
+pillow==12.3.0
+tabulate==0.10.0
+tqdm==4.70.1
+imageio-ffmpeg==0.6.0      # overlay videos (bundled ffmpeg)
+# web app / REST API
+gradio==6.29.0
+fastapi==0.142.2
+uvicorn==0.54.0
+python-multipart==0.0.32

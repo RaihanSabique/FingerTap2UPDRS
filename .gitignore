@@ -1,0 +1,55 @@
+# --- data (HUBU-FIS videos are CC-BY-4.0 but 21 GB: download from Zenodo 17738775) ---
+data/*
+!data/videos_FIS/
+data/videos_FIS/*
+!data/videos_FIS/fis_diagnostic.csv
+*.zip
+
+# --- environments / caches ---
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# --- third-party pose weights (fetch with scripts/download_models.py) ---
+models/mediapipe/
+models/rtmdet_hand/
+models/rtmpose_hand/
+models/vitpose_wholebody/
+models/hf_cache/
+# models/classifier/*.joblib ARE tracked (the trained FingerTap2UPDRS models)
+
+# --- large intermediate outputs (regenerate with the pipeline) ---
+outputs/pose/
+outputs/taps/
+outputs/cv/
+# outputs/features/ and outputs/results/ ARE tracked (small, needed to inspect results)
+
+# --- build products / logs / vendored reference code ---
+deploy/
+slurm/logs/
+third_party/
+*.tmp.npz
+
+# --- catch-all for large binaries anywhere in the tree (GitHub rejects files > 100 MB) ---
+*.mp4
+*.MP4
+*.mov
+*.MOV
+*.avi
+*.m4v
+*.onnx
+*.task
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+*.engine
+*.npz
+*.npy
+*.h5
+*.tar
+*.tar.gz
+*.7z
+# ...except the small demo overlays rendered by scripts/render_overlay.py
+!docs/media/*.mp4
