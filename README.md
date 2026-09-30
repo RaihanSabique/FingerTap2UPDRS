@@ -14,8 +14,7 @@ MDS-UPDRS 3.4 score (0–3) and a Parkinson's-vs-control probability.**
 ## Demo
 
 Kinematic overlays from the best pose backend (RTMDet + RTMPose-m hand). One clip per
-clinician score, drawn at random (fixed seed) from well-tracked videos
-(`scripts/render_overlay.py --per_class 1 --seed 7`). The UPDRS score and P(PD) in the panel
+clinician score, drawn at random (fixed seed) from well-tracked videos. The UPDRS score and P(PD) in the panel
 are **out-of-fold** predictions from models that never saw that participant.
 
 | Clinician 0 · predicted 0 · control | Clinician 1 · predicted 1 · PD |
@@ -29,7 +28,7 @@ are **out-of-fold** predictions from models that never saw that participant.
 Left: RTMPose-m hand skeleton, with the thumb–index aperture in orange. Right: the aperture
 trace with detected taps (▼) and a playhead, the clip's kinematic summary, and the model
 output. The GIFs show the first 6 s; the linked MP4s show the whole clip. The score-3 clip
-shows the amplitude decrement (−4.3 %/tap) that the model under-scores as 2.
+shows the amplitude decrement (−4.3 %tap) that the model under-scores as 2.
 
 ## Dataset
 
@@ -57,8 +56,6 @@ data/videos_FIS/
 └── videos/                 # CONTROL01_DCHA.mp4, ..., ID9998_IZDA.mp4 (234 files)
 ```
 
-The overlay clips in `docs/media/` are derived from HUBU-FIS videos and are redistributed under
-CC-BY-4.0 with the attribution above.
 
 ## Installation
 
@@ -72,8 +69,6 @@ pip install -r requirements.txt
 python scripts/download_models.py            # MediaPipe + RTMDet + RTMPose (~67 MB)
 python scripts/download_models.py --vitpose  # optional: ViTPose-B wholebody (360 MB, research only)
 ```
-
-`scikit-learn` must be exactly 1.7.2 to load the bundled classifiers.
 
 ## Quick start
 
@@ -91,8 +86,6 @@ P(Parkinson's) = 0.98 -> Parkinson's disease
 taps 19, rate 0.8971 Hz, amplitude 0.9761 PL, amp trend -4.3428 %/tap, hesitations 0
 ```
 
-This clip is part of the training data, so the output is in-sample. The honest out-of-fold
-prediction for it is 2 (see [Demo](#demo)).
 
 **Python**
 
