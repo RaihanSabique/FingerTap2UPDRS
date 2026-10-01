@@ -15,15 +15,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DST = ROOT / "deploy/hf_space"
 
-PKG_FILES = ["__init__.py", "video.py", "pose.py", "kinematics.py", "models.py", "predict.py"]
+PKG_FILES = ["__init__.py", "video.py", "pose.py", "kinematics.py", "models.py", "predict.py", "overlay.py"]
 WEIGHTS = ["mediapipe/hand_landmarker.task", "rtmdet_hand/rtmdet_nano_hand.onnx",
            "rtmpose_hand/rtmpose_m_hand5_256.onnx",
            "classifier/handtap_updrs.joblib", "classifier/handtap_pd.joblib"]
 PINNED = ["numpy", "scipy", "pandas", "scikit-learn", "xgboost", "joblib", "opencv-python-headless",
-          "mediapipe", "onnxruntime", "matplotlib", "gradio", "fastapi", "uvicorn", "python-multipart"]
+          "mediapipe", "onnxruntime", "matplotlib", "pillow", "imageio-ffmpeg", "gradio", "fastapi", "uvicorn", "python-multipart"]
 
 README = """---
-title: HandTap2PDScore
+title: FingerTap2UPDRS
 emoji: 🖐️
 colorFrom: blue
 colorTo: indigo
@@ -33,7 +33,7 @@ python_version: "3.10"
 app_file: app.py
 pinned: false
 license: other
-short_description: Finger-tapping video to MDS-UPDRS 3.4 score and PD probability
+short_description: Finger-tapping video to MDS-UPDRS 3.4 score and PD risk
 ---
 
 # HandTap2PDScore
@@ -43,7 +43,16 @@ Upload a finger-tapping video; the app tracks the hand with **MediaPipe HandLand
 hesitations, rhythm, smoothness) and predicts the **MDS-UPDRS 3.4** finger-tapping score (0-3)
 and the probability of Parkinson's disease.
 
+## Access
+
+The app is password protected. The Space owner sets the Space secrets `HANDTAP_PASSWORD`
+(required; the app refuses to start without it) and optionally `HANDTAP_USER` (default
+`handtap`). Open the app at its direct URL (`https://<user>-<space>.hf.space`): browsers may
+block the login cookie inside the huggingface.co page frame.
+
 ## API (for a custom front end)
+
+All endpoints need HTTP Basic auth with the same username and password.
 
 ```
 POST /api/predict      multipart form field `video`  -> JSON (prediction, kinematics, taps, signals, quality)
@@ -52,7 +61,8 @@ GET  /api/health       loaded models and their cross-validated metrics
 
 ```js
 const fd = new FormData(); fd.append("video", file);
-const res = await fetch("https://<user>-handtap2pdscore.hf.space/api/predict", {{method: "POST", body: fd}});
+const res = await fetch("https://<user>-<space>.hf.space/api/predict", {{method: "POST", body: fd,
+  headers: {{Authorization: "Basic " + btoa(user + ":" + password)}}}});
 const result = await res.json();   // result.prediction.updrs.score, result.prediction.pd.probability, ...
 ```
 
@@ -65,7 +75,7 @@ Model weights: MediaPipe (Apache-2.0), RTMPose/RTMDet (OpenMMLab, Apache-2.0).
 """
 
 DOCKERFILE = """FROM python:3.10-slim
-RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 libegl1 libgles2 && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY requirements-docker.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
@@ -97,6 +107,8 @@ if __name__ == "__main__":
     gv = next((r.split("==")[1] for r in req if r.startswith("gradio==")), "5.0.0")
     (DST / "README.md").write_text(README.format(gradio=gv))
     (DST / "Dockerfile").write_text(DOCKERFILE)
+    # apt packages for the HF gradio image: opencv-contrib needs libGL; mediapipe dlopens libEGL/GLES even on CPU
+    (DST / "packages.txt").write_text("libgl1\nlibglib2.0-0\nlibegl1\nlibgles2\n")
     (DST / "requirements-docker.txt").write_text("\n".join(req) + "\n")
     (DST / ".gitattributes").write_text("*.onnx filter=lfs diff=lfs merge=lfs -text\n"
                                         "*.task filter=lfs diff=lfs merge=lfs -text\n"

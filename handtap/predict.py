@@ -76,9 +76,12 @@ def _clean(x):
 
 class HandTapPredictor:
     def __init__(self, classifier_dir=CLASSIFIERS, threads=None, max_side=None, det_every=1,
-                 parallel=False):
+                 parallel=False, qc=True):
         """max_side / det_every / parallel: speed settings passed to extract_keypoints
-        (defaults = the training extraction; see scripts/check_fast_mode.py)."""
+        (defaults = the training extraction; see scripts/check_fast_mode.py).
+        qc: also run MediaPipe as a cross-check of the tracking (agreement r, mm amplitude).
+        It roughly doubles the processing time and does not change the predictions when the
+        classifiers use RTMPose features only."""
         self.speed = dict(max_side=max_side, det_every=det_every, parallel=parallel)
         self.bundles = {}
         for task in ("updrs", "pd"):
@@ -88,11 +91,15 @@ class HandTapPredictor:
         if not self.bundles:
             raise FileNotFoundError(f"no classifier bundles in {classifier_dir}; run scripts/fit_final.py")
         fs = {b["featureset"] for b in self.bundles.values()}
-        # the classifiers may need only one backend, but both always run: their agreement is
-        # the tracking-quality check, and MediaPipe adds a millimetre amplitude estimate
-        self.backends = sorted({"mediapipe", "rtmpose"} | {s.replace("kin_", "") for s in fs
-                                                          if s != "kin_fusion"})
+        # backends the classifiers need; MediaPipe is added on top when qc is on
+        self.required = set().union(*({"mediapipe", "rtmpose"} if s == "kin_fusion"
+                                      else {s.replace("kin_", "")} for s in fs))
+        self.qc = qc
+        self.backends = self._backends(qc)
         self.threads = threads
+
+    def _backends(self, qc):
+        return sorted(self.required | ({"mediapipe"} if qc else set()))
 
     def features_for(self, featureset, per_backend):
         if featureset == "kin_fusion":
@@ -101,12 +108,16 @@ class HandTapPredictor:
                     for k in FEATURES}
         return per_backend[featureset.replace("kin_", "")]
 
-    def predict(self, video_path, max_seconds=None, progress=None, keep_signals=True):
+    def predict(self, video_path, max_seconds=None, progress=None, keep_signals=True, qc=None,
+                return_details=False):
+        """Analyse one video. With return_details=True also returns the raw keypoints,
+        signals, taps and per-backend features (for the overlay renderer)."""
         t0 = time.time()
-        raw = extract_keypoints(video_path, backends=self.backends, max_seconds=max_seconds,
+        backends = self._backends(self.qc if qc is None else qc)
+        raw = extract_keypoints(video_path, backends=backends, max_seconds=max_seconds,
                                 threads=self.threads, progress=progress, **self.speed)
         per, sigs, taps = {}, {}, {}
-        for b in self.backends:
+        for b in backends:
             world = raw[b].get("world") if b == "mediapipe" else None
             sigs[b], taps[b], per[b] = analyse(raw[b]["kpts"], raw[b]["valid"], raw["t"], world)
         # the backend the UPDRS model reads drives the displayed metrics, taps and signals
@@ -116,7 +127,7 @@ class HandTapPredictor:
         out = dict(version=__version__, video=Path(video_path).name,
                    duration_s=_clean(raw["t"][-1] if len(raw["t"]) else 0.0),
                    fps=_clean(raw["fps"]), frames=int(len(raw["t"])),
-                   backends=self.backends, prediction={}, quality={}, kinematics={})
+                   backends=backends, prediction={}, quality={}, kinematics={})
 
         for task, bun in self.bundles.items():
             f = self.features_for(bun["featureset"], per)
@@ -147,14 +158,14 @@ class HandTapPredictor:
             out["kinematics"][k] = dict(value=_clean(v), label=lab, unit=unit, description=desc)
         out["kinematics_by_backend"] = {b: {k: _clean(v) for k, v in per[b].items()} for b in per}
 
-        cov = {b: _clean(float(raw[b]["valid"].mean())) for b in self.backends}
+        cov = {b: _clean(float(raw[b]["valid"].mean())) for b in backends}
         warnings = []
         if min(v or 0 for v in cov.values()) < 0.8:
             warnings.append("hand tracked in < 80% of frames - keep the whole hand in view, good light")
         if (per[primary]["n_taps"] or 0) < 8:
             warnings.append("fewer than 8 taps detected - ask for ~10 s of continuous tapping")
         if len(sigs) == 2:
-            a, b = (sigs[k]["aperture"] for k in self.backends)
+            a, b = (sigs[k]["aperture"] for k in backends)
             ok = np.isfinite(a) & np.isfinite(b)
             r = float(np.corrcoef(a[ok], b[ok])[0, 1]) if ok.sum() > 30 else np.nan
             out["quality"]["backend_agreement_r"] = _clean(r)
@@ -170,11 +181,13 @@ class HandTapPredictor:
                                   aperture=[_clean(v) for v in s["aperture"][::step]],
                                   velocity=[_clean(v) for v in s["velocity"][::step]])
             if len(sigs) == 2:
-                other = [b for b in self.backends if b != primary][0]
+                other = [b for b in backends if b != primary][0]
                 out["signals"][f"aperture_{other}"] = [_clean(v) for v in sigs[other]["aperture"][::step]]
         out["processing_s"] = round(time.time() - t0, 1)
         out["disclaimer"] = ("Research prototype trained on 234 clips (HUBU-FIS). Not a diagnostic "
                              "device; a clinician must interpret the result.")
+        if return_details:
+            return out, dict(raw=raw, sigs=sigs, taps=taps, features=per, primary=primary)
         return out
 
 
