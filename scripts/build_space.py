@@ -47,7 +47,7 @@ and the probability of Parkinson's disease.
 
 The app is password protected. The Space owner sets the Space secrets `HANDTAP_PASSWORD`
 (required; the app refuses to start without it) and optionally `HANDTAP_USER` (default
-`handtap`). Open the app at its direct URL (`https://<user>-<space>.hf.space`): browsers may
+`EmoryViTAL`). Open the app at its direct URL (`https://<user>-<space>.hf.space`): browsers may
 block the login cookie inside the huggingface.co page frame.
 
 ## API (for a custom front end)

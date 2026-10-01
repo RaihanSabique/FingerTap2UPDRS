@@ -3,9 +3,9 @@
     python app/app.py                  # http://localhost:7860
     curl -F video=@clip.mp4 http://localhost:7860/api/predict
 
-Password protection: set HANDTAP_PASSWORD (and optionally HANDTAP_USER, default "handtap").
+Password protection: set HANDTAP_PASSWORD (and optionally HANDTAP_USER, default "EmoryViTAL").
 The Gradio page then shows a login form and the REST endpoints need HTTP Basic auth:
-    curl -u handtap:<password> -F video=@clip.mp4 https://<space>.hf.space/api/predict
+    curl -u EmoryViTAL:<password> -F video=@clip.mp4 https://<space>.hf.space/api/predict
 On a Hugging Face Space (SPACE_ID set) the app refuses to start without a password.
 
 On a Hugging Face Space (sdk: gradio) this file is the entry point; the Space runs
@@ -61,7 +61,7 @@ MAX_SECONDS = float(os.environ.get("HANDTAP_MAX_SECONDS", 30))  # MDS-UPDRS need
 MAX_MB = 200
 
 # ----------------------------------------------------------------------------- auth
-AUTH_USER = os.environ.get("HANDTAP_USER", "handtap")
+AUTH_USER = os.environ.get("HANDTAP_USER", "EmoryViTAL")
 AUTH_PASSWORD = os.environ.get("HANDTAP_PASSWORD", "")
 if not AUTH_PASSWORD and os.environ.get("SPACE_ID"):
     # fail closed: a Space without the secret would otherwise be open to anyone
