@@ -12,20 +12,6 @@ MDS-UPDRS 3.4 score (0–3) and a Parkinson's-vs-control probability.**
 > Research prototype. Trained and validated on a single dataset (HUBU-FIS, 234 videos,
 > 118 participants).
 
-## Live app
-
-**Try it in the browser: <https://raihan116-fingertap2updrs.hf.space>**. No installation or
-login is needed. Upload (or record) a 10–20 s finger-tapping video and click **Analyse**. The app
-returns the MDS-UPDRS 3.4 score, P(Parkinson's), a tracking-overlay video, the aperture trace and
-every kinematic metric, with a JSON download. A 20 s clip takes about 1–1.5 minutes on the Space's 2 CPUs.
-
-[![FingerTap2UPDRS web app](docs/media/app_screenshot.png)](https://raihan116-fingertap2updrs.hf.space)
-
-<sub>Screenshot of the live app analysing HUBU-FIS clip `ID40_IZDA` (clinician score 2). The
-deployed models were trained on all 234 clips, so this result is in-sample. The out-of-fold
-results are in [Demo](#demo). The same server exposes a REST API (`POST /api/predict`, add
-`?overlay=true` for the tracking video) for custom front ends.</sub>
-
 ## Demo
 
 Kinematic overlays from the best pose backend (RTMDet + RTMPose-m hand). One clip per
@@ -40,10 +26,14 @@ are **out-of-fold** predictions from models that never saw that participant.
 | <img src="docs/media/ID40_IZDA_overlay.gif" width="100%"> | <img src="docs/media/ID9993_IZDA_overlay.gif" width="100%"> |
 | [full video](docs/media/ID40_IZDA_overlay.mp4) | [full video](docs/media/ID9993_IZDA_overlay.mp4) |
 
-Left: RTMPose-m hand skeleton, with the thumb–index aperture in orange. Right: the aperture
-trace with detected taps (▼) and a playhead, the clip's kinematic summary, and the model
-output. The GIFs show the first 6 s; the linked MP4s show the whole clip. The score-3 clip
-shows the amplitude decrement (−4.3 %tap) that the model under-scores as 2.
+
+## Live app
+
+**Try it in the browser: <https://raihan116-fingertap2updrs.hf.space>**. No installation or
+login is needed. Upload (or record) a 10–20 s finger-tapping video and click **Analyse**.
+
+[![FingerTap2UPDRS web app](docs/media/app_screenshot.png)](https://raihan116-fingertap2updrs.hf.space)
+
 
 ## Dataset
 
@@ -53,23 +43,6 @@ licensed **CC-BY-4.0**. It contains 234 videos (≈20 s, 30 fps, mostly 1080×19
 the finger-tapping test performed by controls and people with Parkinson's disease at the
 University of Burgos / Hospital Universitario de Burgos (project PI19/00670, ISCIII, Spain).
 Each hand was rated on MDS-UPDRS item 3.4 by clinicians.
-
-| | UPDRS 0 | UPDRS 1 | UPDRS 2 | UPDRS 3 | Total |
-|---|---:|---:|---:|---:|---:|
-| Control videos (`CONTROLxx`) | 58 | 27 | – | – | 85 |
-| PD videos (`IDxx`) | 13 | 72 | 38 | 26 | 149 |
-
-There are 118 participants, each with a right-hand (`_DCHA`) and a left-hand (`_IZDA`) clip; two
-participants have one clip only. No clip is rated 4. Eight clips are `.MOV`, the rest `.mp4`.
-
-The labels file `fis_diagnostic.csv` is included here. The videos are **not**: download
-`HUBU-FIS_FT.zip` from Zenodo and unpack it so that:
-
-```
-data/videos_FIS/
-├── fis_diagnostic.csv      # ID,UPDRS
-└── videos/                 # CONTROL01_DCHA.mp4, ..., ID9998_IZDA.mp4 (234 files)
-```
 
 
 ## Installation
@@ -114,14 +87,6 @@ res["kinematics"]["amp_slope_pct"]                  # {'value': ..., 'unit': '%/
 plot_result(res, "result.png")
 ```
 
-**Web app** at <http://localhost:7860>:
-
-```bash
-python app/app.py
-```
-
-Recording tips: film one hand from the side with the whole hand in view, and tap the index
-finger on the thumb as fast and as wide as possible for 10–20 s.
 
 ## Results
 
