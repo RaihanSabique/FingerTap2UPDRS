@@ -45,24 +45,22 @@ and the probability of Parkinson's disease.
 
 ## Access
 
-The app is password protected. The Space owner sets the Space secrets `HANDTAP_PASSWORD`
-(required; the app refuses to start without it) and optionally `HANDTAP_USER` (default
-`EmoryViTAL`). Open the app at its direct URL (`https://<user>-<space>.hf.space`): browsers may
-block the login cookie inside the huggingface.co page frame.
+The app is public. To require a login, set the Space secret `HANDTAP_PASSWORD` (and
+optionally `HANDTAP_USER`, default `EmoryViTAL`); the UI then shows a login form and the API
+needs HTTP Basic auth with the same credentials.
 
 ## API (for a custom front end)
 
-All endpoints need HTTP Basic auth with the same username and password.
-
 ```
 POST /api/predict      multipart form field `video`  -> JSON (prediction, kinematics, taps, signals, quality)
+                       ?overlay=true  also render the tracking video (download from overlay_url, kept 1 h)
+                       ?qc=true       add the MediaPipe cross-check (slower)
 GET  /api/health       loaded models and their cross-validated metrics
 ```
 
 ```js
 const fd = new FormData(); fd.append("video", file);
-const res = await fetch("https://<user>-<space>.hf.space/api/predict", {{method: "POST", body: fd,
-  headers: {{Authorization: "Basic " + btoa(user + ":" + password)}}}});
+const res = await fetch("https://<user>-<space>.hf.space/api/predict", {{method: "POST", body: fd}});
 const result = await res.json();   // result.prediction.updrs.score, result.prediction.pd.probability, ...
 ```
 

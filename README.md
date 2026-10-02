@@ -7,9 +7,24 @@ MDS-UPDRS 3.4 score (0–3) and a Parkinson's-vs-control probability.**
 [![Dataset DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17738775.svg)](https://doi.org/10.5281/zenodo.17738775)
 ![Python 3.10](https://img.shields.io/badge/python-3.10-blue)
 ![CPU only](https://img.shields.io/badge/inference-CPU%20only-lightgrey)
+[![Open in Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/open-in-hf-spaces-md.svg)](https://raihan116-fingertap2updrs.hf.space)
 
 > Research prototype. Trained and validated on a single dataset (HUBU-FIS, 234 videos,
 > 118 participants).
+
+## Live app
+
+**Try it in the browser: <https://raihan116-fingertap2updrs.hf.space>**. No installation or
+login is needed. Upload (or record) a 10–20 s finger-tapping video and click **Analyse**. The app
+returns the MDS-UPDRS 3.4 score, P(Parkinson's), a tracking-overlay video, the aperture trace and
+every kinematic metric, with a JSON download. A 20 s clip takes about 1–1.5 minutes on the Space's 2 CPUs.
+
+[![FingerTap2UPDRS web app](docs/media/app_screenshot.png)](https://raihan116-fingertap2updrs.hf.space)
+
+<sub>Screenshot of the live app analysing HUBU-FIS clip `ID40_IZDA` (clinician score 2). The
+deployed models were trained on all 234 clips, so this result is in-sample. The out-of-fold
+results are in [Demo](#demo). The same server exposes a REST API (`POST /api/predict`, add
+`?overlay=true` for the tracking video) for custom front ends.</sub>
 
 ## Demo
 

@@ -3,10 +3,10 @@
     python app/app.py                  # http://localhost:7860
     curl -F video=@clip.mp4 http://localhost:7860/api/predict
 
-Password protection: set HANDTAP_PASSWORD (and optionally HANDTAP_USER, default "EmoryViTAL").
-The Gradio page then shows a login form and the REST endpoints need HTTP Basic auth:
-    curl -u EmoryViTAL:<password> -F video=@clip.mp4 https://<space>.hf.space/api/predict
-On a Hugging Face Space (SPACE_ID set) the app refuses to start without a password.
+Optional password protection: set HANDTAP_PASSWORD (and optionally HANDTAP_USER, default
+"EmoryViTAL"). The Gradio page then shows a login form and the REST endpoints need HTTP Basic
+auth (curl -u EmoryViTAL:<password> ...). Without HANDTAP_PASSWORD the app is open to anyone
+who can reach it.
 
 On a Hugging Face Space (sdk: gradio) this file is the entry point; the Space runs
 `python app.py`, which serves on port 7860.
@@ -62,10 +62,7 @@ MAX_MB = 200
 
 # ----------------------------------------------------------------------------- auth
 AUTH_USER = os.environ.get("HANDTAP_USER", "EmoryViTAL")
-AUTH_PASSWORD = os.environ.get("HANDTAP_PASSWORD", "")
-if not AUTH_PASSWORD and os.environ.get("SPACE_ID"):
-    # fail closed: a Space without the secret would otherwise be open to anyone
-    raise RuntimeError("HANDTAP_PASSWORD is not set: add it under Space settings -> Variables and secrets")
+AUTH_PASSWORD = os.environ.get("HANDTAP_PASSWORD", "")   # empty = no login (public app)
 _basic = HTTPBasic(auto_error=False)
 
 
@@ -178,7 +175,10 @@ def _summary_md(r):
     if q["warnings"]:
         lines.append("\n**Quality warnings**\n" + "\n".join(f"- ⚠️ {w}" for w in q["warnings"]))
     else:
-        lines.append(f"\nTracking quality OK (backend agreement r = {q.get('backend_agreement_r')})")
+        cov = min(v for v in q["coverage"].values() if v is not None)
+        agree = q.get("backend_agreement_r")
+        lines.append(f"\nTracking quality OK: hand found in {cov:.0%} of frames"
+                     + (f", MediaPipe/RTMPose agreement r = {agree:.2f}" if agree is not None else ""))
     if "updrs" in p and p["updrs"]["cv_metrics"]:
         m = p["updrs"]["cv_metrics"]
         lines.append(f"\n<small>UPDRS model ({p['updrs']['featureset']}/{p['updrs']['model']}) "
@@ -220,7 +220,10 @@ with gr.Blocks(title="HandTap2PDScore", delete_cache=(1800, OVERLAY_TTL)) as dem
     gr.Markdown("# HandTap2PDScore\nFinger-tapping video → hand keypoints (MediaPipe + RTMPose) → "
                 "kinematics → MDS-UPDRS 3.4 score and Parkinson's probability.\n\n"
                 "Film one hand from the side, whole hand in view, tapping index finger on thumb "
-                "as fast and wide as possible for 10–20 s.")
+                "as fast and wide as possible for 10–20 s.\n\n"
+                "<small>Uploads are only used for this analysis; the tracking video is deleted "
+                "within an hour. Only upload videos of people who have agreed to it. "
+                "Research prototype, not a diagnostic device.</small>")
     with gr.Row():
         with gr.Column(scale=1):
             vid = gr.Video(label="Finger-tapping video", sources=["upload", "webcam"])
